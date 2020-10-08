@@ -1,0 +1,117 @@
+﻿@page "/Ideas"
+@inject IIdeaRepository repostory
+@inject IJSRuntime JS
+
+<h3>Ideas</h3>
+
+@if (ideas == null)
+{
+    <p><em>Loading...</em></p> }
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Note</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var idea in ideas)
+            {
+                <tr>
+                    <td>@idea.Id</td>
+                    <td>@idea.Note</td>
+                    <td>
+                        <input type="button" value="Delete" class="btn btn-danger"
+                               @onclick="( () => DeleteBy(idea) )"
+                               data-toggle="modal" data-target="#manufacterDeleteDialog" />
+                        @*클릭시 삭제 팝업(대화상자)*@
+                    </td>
+                </tr>
+
+            }
+        </tbody>
+    </table>}
+
+<input type="button" value="글쓰기" @onclick="btnCreate_Click" class="btn btn-primary" />
+
+@if (isShow)
+{
+    <div class="modal fade show" tabindex="-1" role="dialog" style="display:block" id="myModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Modal title</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" @onclick="btnClose_Click">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="exampleInputEmail1">아이디어</label>
+                            <input type="text" class="form-control" @bind="idea.Note">
+
+                        </div>
+                    </form>
+                    @*<button type="button" class="btn btn-primary" @onclick="btnSave_Click">Submit</button>*@
+                    <button type="button" class="btn btn-primary" @onclick="btnSave_Click">Save</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="btnClose_Click">Close</button>
+                </div>
+
+                <div class="modal-footer">
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+@code {
+    Idea idea = new Idea();
+
+
+
+    private bool isShow = false;
+
+    private List<Idea> ideas;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ideas = await repostory.GetIdeas();
+    }
+
+    private void btnCreate_Click()
+    {
+        isShow = true;
+    }
+    private void btnClose_Click()
+    {
+        isShow = false;
+        idea = new Idea(); //초기화?
+
+
+    }
+
+    private async Task btnSave_Click()
+    {
+        await repostory.AddIdea(idea);
+        isShow = false;
+        ideas = await repostory.GetIdeas();
+        idea = new Idea();
+    }
+
+
+    private async void DeleteBy(Idea idea)
+    {
+        await repostory.Deletemanuidea(idea.Id);
+        //await repository.Deletemanufacturer(manufacturer.Id); //삭제
+        await JS.InvokeAsync<object>("closeModal", "manufacterDeleteDialog"); //확인창 닫는거
+        ideas = await repostory.GetIdeas();
+        idea = new Idea(); //선택항목 초기화
+    }
+
+}
+
+
